@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { RequireAuth } from "@/components/RequireAuth";
 import { AppShell } from "@/components/AppShell";
+import { NetworkGraph, type GraphNode, type GraphEdge } from "@/components/NetworkGraph";
 import { Sparkles, Users, ArrowRight, Calendar, TrendingUp } from "lucide-react";
+
 
 export const Route = createFileRoute("/dashboard")({
   component: () => (
@@ -26,6 +28,8 @@ function Dashboard() {
   const [matches, setMatches] = useState<Array<Profile & { score: number; complement: string[] }>>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
+  const [graph, setGraph] = useState<{ nodes: GraphNode[]; edges: GraphEdge[] }>({ nodes: [], edges: [] });
+
 
   useEffect(() => {
     if (!user) return;
@@ -80,8 +84,45 @@ function Dashboard() {
         .gte("scheduled_at", new Date().toISOString())
         .order("scheduled_at").limit(4);
       setSessions(ses ?? []);
+
+      // build network graph from accepted connections
+      const { data: conns } = await supabase
+        .from("connection_requests")
+        .select("from_user, to_user, status")
+        .or(`from_user.eq.${user.id},to_user.eq.${user.id}`)
+        .eq("status", "accepted");
+      const peerIds = new Set<string>();
+      (conns ?? []).forEach((c) => {
+        peerIds.add(c.from_user === user.id ? c.to_user : c.from_user);
+      });
+      const peerArr = Array.from(peerIds);
+      const peerProfiles = peerArr.length
+        ? (await supabase.from("profiles").select("id, full_name").in("id", peerArr)).data ?? []
+        : [];
+      const nodes: GraphNode[] = [
+        { id: user.id, label: meRow?.full_name ?? "You" },
+        ...peerProfiles.map((p) => ({ id: p.id, label: p.full_name })),
+      ];
+      const edges: GraphEdge[] = peerArr.map((pid) => ({ source: user.id, target: pid, weight: 1.5 }));
+      // also connect peers who share a project with the user
+      const { data: myProjects } = await supabase.from("project_members").select("project_id").eq("user_id", user.id);
+      if (myProjects?.length) {
+        const projIds = myProjects.map((p) => p.project_id);
+        const { data: allMembers } = await supabase.from("project_members").select("project_id, user_id").in("project_id", projIds);
+        const seen = new Set<string>();
+        (allMembers ?? []).forEach((m) => {
+          if (m.user_id !== user.id && peerIds.has(m.user_id)) {
+            const k = [user.id, m.user_id, m.project_id].sort().join("|");
+            if (!seen.has(k)) { seen.add(k); edges.push({ source: user.id, target: m.user_id, weight: 0.6 }); }
+          }
+        });
+      }
+      setGraph({ nodes, edges });
     })();
   }, [user]);
+
+
+
 
   return (
     <div className="space-y-8">
@@ -163,17 +204,25 @@ function Dashboard() {
         </div>
 
         <div className="col-span-12 lg:col-span-4 space-y-6">
-          <div className="bg-foreground text-background rounded-2xl p-6 overflow-hidden relative">
-            <h2 className="font-display font-semibold mb-1 flex items-center gap-2">
-              <TrendingUp className="size-4" /> Network Growth
-            </h2>
-            <p className="text-xs opacity-70 mb-6">Your collaboration graph</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div><div className="text-2xl font-bold">{matches.length}</div><div className="text-[10px] uppercase tracking-widest opacity-60">Suggested</div></div>
-              <div><div className="text-2xl font-bold">{projects.length}</div><div className="text-[10px] uppercase tracking-widest opacity-60">Projects</div></div>
+          <div className="bg-foreground text-background rounded-2xl p-5 overflow-hidden relative">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="font-display font-semibold flex items-center gap-2">
+                <TrendingUp className="size-4" /> Network Graph
+              </h2>
+              <span className="text-[10px] uppercase tracking-widest opacity-60">{graph.nodes.length - 1 > 0 ? `${graph.nodes.length - 1} peers` : "solo"}</span>
             </div>
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent pointer-events-none" />
+            <p className="text-xs opacity-70 mb-2">Your live collaboration network</p>
+            <div className="h-64 -mx-2">
+              <NetworkGraph nodes={graph.nodes} edges={graph.edges} meId={user?.id} height={260} />
+            </div>
+            <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-white/10 text-center">
+              <div><div className="text-lg font-bold">{matches.length}</div><div className="text-[9px] uppercase tracking-widest opacity-60">Matches</div></div>
+              <div><div className="text-lg font-bold">{graph.nodes.length - 1}</div><div className="text-[9px] uppercase tracking-widest opacity-60">Connections</div></div>
+              <div><div className="text-lg font-bold">{projects.length}</div><div className="text-[9px] uppercase tracking-widest opacity-60">Projects</div></div>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/15 to-transparent pointer-events-none" />
           </div>
+
 
           <div className="bg-card rounded-2xl border border-border shadow-soft p-6">
             <h2 className="font-display font-semibold mb-4 flex items-center gap-2">

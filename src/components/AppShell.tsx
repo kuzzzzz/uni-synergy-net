@@ -12,6 +12,8 @@ import {
   Bell,
   Search,
   GraduationCap,
+  FileText,
+  UserPlus,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useEffect, useState, type ReactNode } from "react";
@@ -21,13 +23,16 @@ import { cn } from "@/lib/utils";
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/matches", label: "Smart Matches", icon: Sparkles },
+  { to: "/connections", label: "Connections", icon: UserPlus },
   { to: "/study-groups", label: "Study Groups", icon: Users },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/messages", label: "Messages", icon: MessageSquare },
+  { to: "/resources", label: "Resources", icon: FileText },
   { to: "/calendar", label: "Calendar", icon: Calendar },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/profile", label: "Profile", icon: UserCircle2 },
 ];
+
 
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
