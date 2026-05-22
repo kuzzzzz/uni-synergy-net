@@ -204,17 +204,25 @@ function Dashboard() {
         </div>
 
         <div className="col-span-12 lg:col-span-4 space-y-6">
-          <div className="bg-foreground text-background rounded-2xl p-6 overflow-hidden relative">
-            <h2 className="font-display font-semibold mb-1 flex items-center gap-2">
-              <TrendingUp className="size-4" /> Network Growth
-            </h2>
-            <p className="text-xs opacity-70 mb-6">Your collaboration graph</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div><div className="text-2xl font-bold">{matches.length}</div><div className="text-[10px] uppercase tracking-widest opacity-60">Suggested</div></div>
-              <div><div className="text-2xl font-bold">{projects.length}</div><div className="text-[10px] uppercase tracking-widest opacity-60">Projects</div></div>
+          <div className="bg-foreground text-background rounded-2xl p-5 overflow-hidden relative">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="font-display font-semibold flex items-center gap-2">
+                <TrendingUp className="size-4" /> Network Graph
+              </h2>
+              <span className="text-[10px] uppercase tracking-widest opacity-60">{graph.nodes.length - 1 > 0 ? `${graph.nodes.length - 1} peers` : "solo"}</span>
             </div>
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent pointer-events-none" />
+            <p className="text-xs opacity-70 mb-2">Your live collaboration network</p>
+            <div className="h-64 -mx-2">
+              <NetworkGraph nodes={graph.nodes} edges={graph.edges} meId={user?.id} height={260} />
+            </div>
+            <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-white/10 text-center">
+              <div><div className="text-lg font-bold">{matches.length}</div><div className="text-[9px] uppercase tracking-widest opacity-60">Matches</div></div>
+              <div><div className="text-lg font-bold">{graph.nodes.length - 1}</div><div className="text-[9px] uppercase tracking-widest opacity-60">Connections</div></div>
+              <div><div className="text-lg font-bold">{projects.length}</div><div className="text-[9px] uppercase tracking-widest opacity-60">Projects</div></div>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/15 to-transparent pointer-events-none" />
           </div>
+
 
           <div className="bg-card rounded-2xl border border-border shadow-soft p-6">
             <h2 className="font-display font-semibold mb-4 flex items-center gap-2">
