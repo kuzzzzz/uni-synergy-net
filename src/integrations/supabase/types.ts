@@ -338,6 +338,72 @@ export type Database = {
         }
         Relationships: []
       }
+      ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          rated_id: string
+          rater_id: string
+          stars: number
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rated_id: string
+          rater_id: string
+          stars: number
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rated_id?: string
+          rater_id?: string
+          stars?: number
+        }
+        Relationships: []
+      }
+      resources: {
+        Row: {
+          created_at: string
+          description: string | null
+          group_id: string | null
+          id: string
+          owner_id: string
+          project_id: string | null
+          resource_type: string
+          tags: string[] | null
+          title: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          group_id?: string | null
+          id?: string
+          owner_id: string
+          project_id?: string | null
+          resource_type?: string
+          tags?: string[] | null
+          title: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          group_id?: string | null
+          id?: string
+          owner_id?: string
+          project_id?: string | null
+          resource_type?: string
+          tags?: string[] | null
+          title?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       school_id_tokens: {
         Row: {
           created_at: string
