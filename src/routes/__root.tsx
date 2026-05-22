@@ -70,6 +70,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Match with classmates by complementary skills, form project teams, join study groups, and collaborate in real time.",
       },
+      { property: "og:title", content: "Campus Connect — University Collaboration Network" },
+      { name: "twitter:title", content: "Campus Connect — University Collaboration Network" },
+      { name: "description", content: "Campus Connect Hub facilitates student collaboration, study partnerships, and project teamwork." },
+      { property: "og:description", content: "Campus Connect Hub facilitates student collaboration, study partnerships, and project teamwork." },
+      { name: "twitter:description", content: "Campus Connect Hub facilitates student collaboration, study partnerships, and project teamwork." },
+      { name: "twitter:card", content: "summary" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
