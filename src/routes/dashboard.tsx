@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { RequireAuth } from "@/components/RequireAuth";
 import { AppShell } from "@/components/AppShell";
+import { NetworkGraph, type GraphNode, type GraphEdge } from "@/components/NetworkGraph";
 import { Sparkles, Users, ArrowRight, Calendar, TrendingUp } from "lucide-react";
+
 
 export const Route = createFileRoute("/dashboard")({
   component: () => (
@@ -26,6 +28,8 @@ function Dashboard() {
   const [matches, setMatches] = useState<Array<Profile & { score: number; complement: string[] }>>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
+  const [graph, setGraph] = useState<{ nodes: GraphNode[]; edges: GraphEdge[] }>({ nodes: [], edges: [] });
+
 
   useEffect(() => {
     if (!user) return;
@@ -80,8 +84,41 @@ function Dashboard() {
         .gte("scheduled_at", new Date().toISOString())
         .order("scheduled_at").limit(4);
       setSessions(ses ?? []);
-    })();
-  }, [user]);
+
+      // build network graph from accepted connections
+      const { data: conns } = await supabase
+        .from("connection_requests")
+        .select("from_user, to_user, status")
+        .or(`from_user.eq.${user.id},to_user.eq.${user.id}`)
+        .eq("status", "accepted");
+      const peerIds = new Set<string>();
+      (conns ?? []).forEach((c) => {
+        peerIds.add(c.from_user === user.id ? c.to_user : c.from_user);
+      });
+      const peerArr = Array.from(peerIds);
+      const peerProfiles = peerArr.length
+        ? (await supabase.from("profiles").select("id, full_name").in("id", peerArr)).data ?? []
+        : [];
+      const nodes: GraphNode[] = [
+        { id: user.id, label: meRow?.full_name ?? "You" },
+        ...peerProfiles.map((p) => ({ id: p.id, label: p.full_name })),
+      ];
+      const edges: GraphEdge[] = peerArr.map((pid) => ({ source: user.id, target: pid, weight: 1.5 }));
+      // also connect peers who share a project with the user
+      const { data: myProjects } = await supabase.from("project_members").select("project_id").eq("user_id", user.id);
+      if (myProjects?.length) {
+        const projIds = myProjects.map((p) => p.project_id);
+        const { data: allMembers } = await supabase.from("project_members").select("project_id, user_id").in("project_id", projIds);
+        const seen = new Set<string>();
+        (allMembers ?? []).forEach((m) => {
+          if (m.user_id !== user.id && peerIds.has(m.user_id)) {
+            const k = [user.id, m.user_id, m.project_id].sort().join("|");
+            if (!seen.has(k)) { seen.add(k); edges.push({ source: user.id, target: m.user_id, weight: 0.6 }); }
+          }
+        });
+      }
+      setGraph({ nodes, edges });
+
 
   return (
     <div className="space-y-8">
