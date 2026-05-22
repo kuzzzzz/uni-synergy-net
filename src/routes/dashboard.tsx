@@ -1,0 +1,210 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-context";
+import { RequireAuth } from "@/components/RequireAuth";
+import { AppShell } from "@/components/AppShell";
+import { Sparkles, Users, ArrowRight, Calendar, TrendingUp } from "lucide-react";
+
+export const Route = createFileRoute("/dashboard")({
+  component: () => (
+    <RequireAuth>
+      <AppShell>
+        <Dashboard />
+      </AppShell>
+    </RequireAuth>
+  ),
+});
+
+type Profile = { id: string; full_name: string; department: string | null; year: string | null };
+type Project = { id: string; title: string; description: string | null; status: string; required_skills: string[] | null };
+type SessionRow = { id: string; title: string; scheduled_at: string; location: string | null };
+
+function Dashboard() {
+  const { user } = useAuth();
+  const [me, setMe] = useState<Profile | null>(null);
+  const [matches, setMatches] = useState<Array<Profile & { score: number; complement: string[] }>>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [sessions, setSessions] = useState<SessionRow[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: meRow } = await supabase
+        .from("profiles").select("id, full_name, department, year").eq("id", user.id).maybeSingle();
+      setMe(meRow);
+
+      // simple match: other profiles in same department, score by overlap of any skill rows
+      const { data: others } = await supabase
+        .from("profiles")
+        .select("id, full_name, department, year")
+        .neq("id", user.id)
+        .limit(20);
+
+      // pull skill rows for everyone
+      const ids = [user.id, ...(others ?? []).map((o) => o.id)];
+      const { data: skills } = await supabase
+        .from("user_skills")
+        .select("user_id, level, can_teach, skill_id, skills(name)")
+        .in("user_id", ids);
+
+      const mySkills = (skills ?? []).filter((s) => s.user_id === user.id);
+      const myWeak = new Set(mySkills.filter((s) => s.level === "weak").map((s) => s.skill_id));
+      const myStrong = new Set(mySkills.filter((s) => s.level === "strong" || s.level === "expert").map((s) => s.skill_id));
+
+      const scored = (others ?? []).map((o) => {
+        const theirs = (skills ?? []).filter((s) => s.user_id === o.id);
+        const theyTeach = theirs.filter((s) => (s.level === "strong" || s.level === "expert") && myWeak.has(s.skill_id));
+        const iTeach = theirs.filter((s) => s.level === "weak" && myStrong.has(s.skill_id));
+        const deptBoost = o.department && meRow?.department && o.department === meRow.department ? 20 : 0;
+        const score = Math.min(99, 40 + theyTeach.length * 15 + iTeach.length * 10 + deptBoost);
+        const complement = [
+          ...theyTeach.slice(0, 2).map((s) => (s as any).skills?.name).filter(Boolean),
+        ];
+        return { ...o, score, complement };
+      });
+      scored.sort((a, b) => b.score - a.score);
+      setMatches(scored.slice(0, 3));
+
+      const { data: pmRows } = await supabase
+        .from("project_members").select("project_id").eq("user_id", user.id);
+      const projectIds = (pmRows ?? []).map((r) => r.project_id);
+      if (projectIds.length) {
+        const { data: ps } = await supabase
+          .from("projects").select("id, title, description, status, required_skills").in("id", projectIds);
+        setProjects(ps ?? []);
+      }
+
+      const { data: ses } = await supabase
+        .from("sessions").select("id, title, scheduled_at, location")
+        .gte("scheduled_at", new Date().toISOString())
+        .order("scheduled_at").limit(4);
+      setSessions(ses ?? []);
+    })();
+  }, [user]);
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-end justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-bold">Welcome back, {me?.full_name?.split(" ")[0] ?? "there"}</h1>
+          <p className="text-muted-foreground mt-1">
+            {me?.department ?? "Set your department in your profile"} {me?.year ? `• ${me.year}` : ""}
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Link to="/projects" className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium shadow-soft hover:shadow-glow text-sm">
+            Create Project
+          </Link>
+          <Link to="/study-groups" className="px-4 py-2 bg-card border border-border rounded-lg font-medium hover:bg-secondary text-sm">
+            Find Group
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-12 lg:col-span-8 space-y-6">
+          <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden">
+            <div className="p-5 border-b border-border flex justify-between items-center">
+              <h2 className="font-display font-semibold flex items-center gap-2">
+                <Sparkles className="size-4 text-primary" /> Smart Matches
+              </h2>
+              <Link to="/matches" className="text-xs font-medium text-primary hover:underline flex items-center gap-1">
+                View all <ArrowRight className="size-3" />
+              </Link>
+            </div>
+            <div className="divide-y divide-border">
+              {matches.length === 0 && (
+                <div className="p-6 text-sm text-muted-foreground text-center">
+                  Add skills to your profile to see personalized matches.
+                </div>
+              )}
+              {matches.map((m) => (
+                <div key={m.id} className="p-5 flex items-center gap-4">
+                  <div className="size-12 rounded-xl bg-gradient-brand flex items-center justify-center text-white font-semibold">
+                    {m.full_name?.[0]?.toUpperCase() ?? "?"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold truncate">{m.full_name}</div>
+                    <div className="text-xs text-muted-foreground">{m.department ?? "—"}</div>
+                    {m.complement.length > 0 && (
+                      <div className="text-xs text-primary mt-1">Can help with: {m.complement.join(", ")}</div>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-gradient-brand">{m.score}%</div>
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">match</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-card rounded-2xl border border-border shadow-soft p-5">
+            <h2 className="font-display font-semibold mb-4 flex items-center gap-2">
+              <Users className="size-4 text-primary" /> Active Projects
+            </h2>
+            {projects.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No active projects yet. <Link to="/projects" className="text-primary hover:underline">Browse projects →</Link></p>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {projects.map((p) => (
+                  <Link key={p.id} to="/projects" className="block p-4 rounded-xl border border-border hover:border-primary/40 hover:bg-secondary/40 transition-colors">
+                    <div className="font-semibold mb-1">{p.title}</div>
+                    <div className="text-xs text-muted-foreground line-clamp-2">{p.description}</div>
+                    <div className="mt-3 inline-flex items-center text-[10px] uppercase tracking-wider font-semibold bg-primary-soft text-primary px-2 py-0.5 rounded">
+                      {p.status}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="col-span-12 lg:col-span-4 space-y-6">
+          <div className="bg-foreground text-background rounded-2xl p-6 overflow-hidden relative">
+            <h2 className="font-display font-semibold mb-1 flex items-center gap-2">
+              <TrendingUp className="size-4" /> Network Growth
+            </h2>
+            <p className="text-xs opacity-70 mb-6">Your collaboration graph</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div><div className="text-2xl font-bold">{matches.length}</div><div className="text-[10px] uppercase tracking-widest opacity-60">Suggested</div></div>
+              <div><div className="text-2xl font-bold">{projects.length}</div><div className="text-[10px] uppercase tracking-widest opacity-60">Projects</div></div>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent pointer-events-none" />
+          </div>
+
+          <div className="bg-card rounded-2xl border border-border shadow-soft p-6">
+            <h2 className="font-display font-semibold mb-4 flex items-center gap-2">
+              <Calendar className="size-4 text-primary" /> Upcoming Sessions
+            </h2>
+            {sessions.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No upcoming sessions.</p>
+            ) : (
+              <div className="space-y-4">
+                {sessions.map((s) => {
+                  const d = new Date(s.scheduled_at);
+                  return (
+                    <div key={s.id} className="flex gap-4">
+                      <div className="flex flex-col items-center justify-center size-12 bg-secondary rounded-xl shrink-0">
+                        <span className="text-[10px] font-bold text-muted-foreground">{d.toLocaleString("en", { month: "short" }).toUpperCase()}</span>
+                        <span className="text-lg font-bold leading-none">{d.getDate()}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-sm font-semibold truncate">{s.title}</h4>
+                        <p className="text-xs text-muted-foreground">
+                          {d.toLocaleTimeString("en", { hour: "numeric", minute: "2-digit" })} • {s.location ?? "Online"}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
