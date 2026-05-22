@@ -11,12 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StudyGroupsRouteImport } from './routes/study-groups'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ConnectionsRouteImport } from './routes/connections'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
@@ -30,6 +32,11 @@ const StudyGroupsRoute = StudyGroupsRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResourcesRoute = ResourcesRouteImport.update({
+  id: '/resources',
+  path: '/resources',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectsRoute = ProjectsRouteImport.update({
@@ -62,6 +69,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConnectionsRoute = ConnectionsRouteImport.update({
+  id: '/connections',
+  path: '/connections',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CalendarRoute = CalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
@@ -87,12 +99,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/calendar': typeof CalendarRoute
+  '/connections': typeof ConnectionsRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/messages': typeof MessagesRoute
   '/profile': typeof ProfileRoute
   '/projects': typeof ProjectsRoute
+  '/resources': typeof ResourcesRoute
   '/signup': typeof SignupRoute
   '/study-groups': typeof StudyGroupsRoute
   '/api/public/school-id-login': typeof ApiPublicSchoolIdLoginRoute
@@ -101,12 +115,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/calendar': typeof CalendarRoute
+  '/connections': typeof ConnectionsRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/messages': typeof MessagesRoute
   '/profile': typeof ProfileRoute
   '/projects': typeof ProjectsRoute
+  '/resources': typeof ResourcesRoute
   '/signup': typeof SignupRoute
   '/study-groups': typeof StudyGroupsRoute
   '/api/public/school-id-login': typeof ApiPublicSchoolIdLoginRoute
@@ -116,12 +132,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/calendar': typeof CalendarRoute
+  '/connections': typeof ConnectionsRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/messages': typeof MessagesRoute
   '/profile': typeof ProfileRoute
   '/projects': typeof ProjectsRoute
+  '/resources': typeof ResourcesRoute
   '/signup': typeof SignupRoute
   '/study-groups': typeof StudyGroupsRoute
   '/api/public/school-id-login': typeof ApiPublicSchoolIdLoginRoute
@@ -132,12 +150,14 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/calendar'
+    | '/connections'
     | '/dashboard'
     | '/login'
     | '/matches'
     | '/messages'
     | '/profile'
     | '/projects'
+    | '/resources'
     | '/signup'
     | '/study-groups'
     | '/api/public/school-id-login'
@@ -146,12 +166,14 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/calendar'
+    | '/connections'
     | '/dashboard'
     | '/login'
     | '/matches'
     | '/messages'
     | '/profile'
     | '/projects'
+    | '/resources'
     | '/signup'
     | '/study-groups'
     | '/api/public/school-id-login'
@@ -160,12 +182,14 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/calendar'
+    | '/connections'
     | '/dashboard'
     | '/login'
     | '/matches'
     | '/messages'
     | '/profile'
     | '/projects'
+    | '/resources'
     | '/signup'
     | '/study-groups'
     | '/api/public/school-id-login'
@@ -175,12 +199,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   CalendarRoute: typeof CalendarRoute
+  ConnectionsRoute: typeof ConnectionsRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
   MatchesRoute: typeof MatchesRoute
   MessagesRoute: typeof MessagesRoute
   ProfileRoute: typeof ProfileRoute
   ProjectsRoute: typeof ProjectsRoute
+  ResourcesRoute: typeof ResourcesRoute
   SignupRoute: typeof SignupRoute
   StudyGroupsRoute: typeof StudyGroupsRoute
   ApiPublicSchoolIdLoginRoute: typeof ApiPublicSchoolIdLoginRoute
@@ -200,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/resources': {
+      id: '/resources'
+      path: '/resources'
+      fullPath: '/resources'
+      preLoaderRoute: typeof ResourcesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/projects': {
@@ -244,6 +277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/connections': {
+      id: '/connections'
+      path: '/connections'
+      fullPath: '/connections'
+      preLoaderRoute: typeof ConnectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/calendar': {
       id: '/calendar'
       path: '/calendar'
@@ -279,12 +319,14 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   CalendarRoute: CalendarRoute,
+  ConnectionsRoute: ConnectionsRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
   MatchesRoute: MatchesRoute,
   MessagesRoute: MessagesRoute,
   ProfileRoute: ProfileRoute,
   ProjectsRoute: ProjectsRoute,
+  ResourcesRoute: ResourcesRoute,
   SignupRoute: SignupRoute,
   StudyGroupsRoute: StudyGroupsRoute,
   ApiPublicSchoolIdLoginRoute: ApiPublicSchoolIdLoginRoute,
@@ -292,3 +334,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
