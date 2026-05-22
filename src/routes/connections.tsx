@@ -27,32 +27,30 @@ function Connections() {
 
   async function load() {
     if (!user) return;
-    const { data } = await supabase
+    const { data: r } = await supabase
       .from("connection_requests")
-      .select("*, from:profiles!connection_requests_from_user_fkey(id,full_name,department), to:profiles!connection_requests_to_user_fkey(id,full_name,department)")
+      .select("*")
       .or(`from_user.eq.${user.id},to_user.eq.${user.id}`)
       .order("created_at", { ascending: false });
-    // FK alias might not exist — fall back to manual fetch
-    let rows = data;
-    if (!rows) {
-      const { data: r } = await supabase.from("connection_requests").select("*").or(`from_user.eq.${user.id},to_user.eq.${user.id}`);
-      const ids = Array.from(new Set((r ?? []).flatMap((x) => [x.from_user, x.to_user])));
-      const { data: profs } = await supabase.from("profiles").select("id, full_name, department").in("id", ids);
-      const map = new Map((profs ?? []).map((p) => [p.id, p]));
-      rows = (r ?? []).map((x) => ({ ...x, from: map.get(x.from_user), to: map.get(x.to_user) }));
-    }
-    setIncoming((rows ?? []).filter((r) => r.to_user === user.id && r.status === "pending"));
-    setOutgoing((rows ?? []).filter((r) => r.from_user === user.id && r.status === "pending"));
-    setAccepted((rows ?? []).filter((r) => r.status === "accepted"));
+    const ids = Array.from(new Set((r ?? []).flatMap((x) => [x.from_user, x.to_user])));
+    const { data: profs } = ids.length
+      ? await supabase.from("profiles").select("id, full_name, department").in("id", ids)
+      : { data: [] as any[] };
+    const map = new Map((profs ?? []).map((p: any) => [p.id, p]));
+    const rows: Req[] = (r ?? []).map((x) => ({ ...x, from: map.get(x.from_user), to: map.get(x.to_user) }));
+    setIncoming(rows.filter((x) => x.to_user === user.id && x.status === "pending"));
+    setOutgoing(rows.filter((x) => x.from_user === user.id && x.status === "pending"));
+    setAccepted(rows.filter((x) => x.status === "accepted"));
   }
   useEffect(() => { load(); }, [user]);
 
-  async function respond(id: string, status: "accepted" | "declined") {
+  async function respond(id: string, status: "accepted" | "rejected") {
     const { error } = await supabase.from("connection_requests").update({ status }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(status === "accepted" ? "Connected" : "Declined");
     load();
   }
+
 
   return (
     <div className="space-y-8">
@@ -66,7 +64,7 @@ function Connections() {
           <Row key={r.id} name={r.from?.full_name} dept={r.from?.department} actions={
             <>
               <button onClick={() => respond(r.id, "accepted")} className="size-8 rounded-lg bg-primary text-primary-foreground inline-flex items-center justify-center"><Check className="size-4" /></button>
-              <button onClick={() => respond(r.id, "declined")} className="size-8 rounded-lg bg-secondary border border-border inline-flex items-center justify-center"><X className="size-4" /></button>
+              <button onClick={() => respond(r.id, "rejected")} className="size-8 rounded-lg bg-secondary border border-border inline-flex items-center justify-center"><X className="size-4" /></button>
             </>
           } />
         ))}
