@@ -118,6 +118,10 @@ function Dashboard() {
         });
       }
       setGraph({ nodes, edges });
+    })();
+  }, [user]);
+
+
 
 
   return (
