@@ -33,11 +33,15 @@ function Resources() {
 
   async function create() {
     if (!user || !form.title.trim()) return;
+    const url = form.url.trim();
+    if (url && !/^https?:\/\//i.test(url)) {
+      return toast.error("Only http:// and https:// URLs are allowed");
+    }
     const { error } = await supabase.from("resources").insert({
       owner_id: user.id,
       title: form.title,
       description: form.description,
-      url: form.url || null,
+      url: url || null,
       resource_type: form.resource_type,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
     });
