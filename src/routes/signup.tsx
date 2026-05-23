@@ -11,7 +11,6 @@ function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [schoolId, setSchoolId] = useState("");
   const [loading, setLoading] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
@@ -22,7 +21,7 @@ function Signup() {
       password,
       options: {
         emailRedirectTo: window.location.origin + "/dashboard",
-        data: { full_name: name, school_id: schoolId || null },
+        data: { full_name: name },
       },
     });
     setLoading(false);
