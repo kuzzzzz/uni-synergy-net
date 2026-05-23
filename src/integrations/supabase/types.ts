@@ -231,12 +231,10 @@ export type Database = {
           bio: string | null
           created_at: string
           department: string | null
-          email: string | null
           full_name: string
           goals: string | null
           id: string
           learning_preference: string | null
-          school_id: string | null
           updated_at: string
           year: string | null
         }
@@ -245,12 +243,10 @@ export type Database = {
           bio?: string | null
           created_at?: string
           department?: string | null
-          email?: string | null
           full_name?: string
           goals?: string | null
           id: string
           learning_preference?: string | null
-          school_id?: string | null
           updated_at?: string
           year?: string | null
         }
@@ -259,16 +255,46 @@ export type Database = {
           bio?: string | null
           created_at?: string
           department?: string | null
-          email?: string | null
           full_name?: string
           goals?: string | null
           id?: string
           learning_preference?: string | null
-          school_id?: string | null
           updated_at?: string
           year?: string | null
         }
         Relationships: []
+      }
+      profiles_private: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          school_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          school_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          school_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_private_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_members: {
         Row: {
