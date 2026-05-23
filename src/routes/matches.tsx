@@ -94,7 +94,7 @@ function Matches() {
     <div className="space-y-6">
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold flex items-center gap-2"><Sparkles className="size-6 text-primary" /> Smart Matches</h1>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2"><Sparkles className="size-6 text-primary" /> Smart Matches</h1>
           <p className="text-muted-foreground mt-1">Ranked by complementary skills, shared interests, and schedule overlap.</p>
         </div>
         <input

@@ -54,7 +54,7 @@ function Analytics() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-3xl font-bold flex items-center gap-2"><BarChart3 className="size-6 text-primary" /> Analytics</h1>
+        <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2"><BarChart3 className="size-6 text-primary" /> Analytics</h1>
         <p className="text-muted-foreground mt-1">Track your participation and achievements.</p>
       </div>
 

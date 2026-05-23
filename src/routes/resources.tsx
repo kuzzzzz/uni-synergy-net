@@ -63,7 +63,7 @@ function Resources() {
     <div className="space-y-6">
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold flex items-center gap-2"><FileText className="size-6 text-primary" /> Shared Resources</h1>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2"><FileText className="size-6 text-primary" /> Shared Resources</h1>
           <p className="text-muted-foreground mt-1">Notes, documents, and links the community has shared.</p>
         </div>
         <button onClick={() => setShow(!show)} className="px-4 h-10 bg-primary text-primary-foreground rounded-lg text-sm font-medium inline-flex items-center gap-1">
