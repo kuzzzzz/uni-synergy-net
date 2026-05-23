@@ -41,11 +41,7 @@ function Login() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Login failed");
-      if (data.action_link) {
-        window.location.href = data.action_link;
-      } else {
-        toast.success("Magic link sent to your campus email.");
-      }
+      toast.success(data.message ?? "If a matching account exists, a login link has been sent to your campus email.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "School ID login failed");
     } finally {

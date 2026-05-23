@@ -11,7 +11,6 @@ function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [schoolId, setSchoolId] = useState("");
   const [loading, setLoading] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
@@ -22,7 +21,7 @@ function Signup() {
       password,
       options: {
         emailRedirectTo: window.location.origin + "/dashboard",
-        data: { full_name: name, school_id: schoolId || null },
+        data: { full_name: name },
       },
     });
     setLoading(false);
@@ -50,10 +49,6 @@ function Signup() {
           />
           <input
             type="email" placeholder="University email" required value={email} onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm outline-none focus:ring-2 focus:ring-ring/30"
-          />
-          <input
-            type="text" placeholder="School ID (optional)" value={schoolId} onChange={(e) => setSchoolId(e.target.value)}
             className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm outline-none focus:ring-2 focus:ring-ring/30"
           />
           <input

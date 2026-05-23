@@ -38,13 +38,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<{ full_name: string; department: string | null; school_id: string | null; avatar_url: string | null } | null>(null);
+  const [profile, setProfile] = useState<{ full_name: string; department: string | null; avatar_url: string | null } | null>(null);
 
   useEffect(() => {
     if (!user) return;
     supabase
       .from("profiles")
-      .select("full_name, department, school_id, avatar_url")
+      .select("full_name, department, avatar_url")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => setProfile(data));
@@ -94,7 +94,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-2">
               <div className="size-2 bg-success rounded-full animate-pulse" />
               <span className="text-xs font-medium truncate">
-                {profile?.school_id ? `School ID (${profile.school_id})` : "Email Account"}
+                {user?.email ?? "Account"}
               </span>
             </div>
           </div>

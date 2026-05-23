@@ -33,11 +33,15 @@ function Resources() {
 
   async function create() {
     if (!user || !form.title.trim()) return;
+    const url = form.url.trim();
+    if (url && !/^https?:\/\//i.test(url)) {
+      return toast.error("Only http:// and https:// URLs are allowed");
+    }
     const { error } = await supabase.from("resources").insert({
       owner_id: user.id,
       title: form.title,
       description: form.description,
-      url: form.url || null,
+      url: url || null,
       resource_type: form.resource_type,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
     });
@@ -106,8 +110,8 @@ function Resources() {
               <div className="flex flex-wrap gap-1 mt-3">
                 {(r.tags ?? []).map((t) => <span key={t} className="text-[10px] bg-secondary px-2 py-0.5 rounded-full">{t}</span>)}
               </div>
-              {r.url && (
-                <a href={r.url} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1 text-sm text-primary font-medium hover:underline">
+              {r.url && /^https?:\/\//i.test(r.url) && (
+                <a href={r.url} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-1 text-sm text-primary font-medium hover:underline">
                   Open <ExternalLink className="size-3.5" />
                 </a>
               )}
