@@ -94,7 +94,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-2">
               <div className="size-2 bg-success rounded-full animate-pulse" />
               <span className="text-xs font-medium truncate">
-                {profile?.school_id ? `School ID (${profile.school_id})` : "Email Account"}
+                {user?.email ?? "Account"}
               </span>
             </div>
           </div>
