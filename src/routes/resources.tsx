@@ -110,8 +110,8 @@ function Resources() {
               <div className="flex flex-wrap gap-1 mt-3">
                 {(r.tags ?? []).map((t) => <span key={t} className="text-[10px] bg-secondary px-2 py-0.5 rounded-full">{t}</span>)}
               </div>
-              {r.url && (
-                <a href={r.url} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1 text-sm text-primary font-medium hover:underline">
+              {r.url && /^https?:\/\//i.test(r.url) && (
+                <a href={r.url} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-1 text-sm text-primary font-medium hover:underline">
                   Open <ExternalLink className="size-3.5" />
                 </a>
               )}
