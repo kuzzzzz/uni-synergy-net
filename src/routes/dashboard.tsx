@@ -128,7 +128,7 @@ function Dashboard() {
     <div className="space-y-8">
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold">Welcome back, {me?.full_name?.split(" ")[0] ?? "there"}</h1>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold">Welcome back, {me?.full_name?.split(" ")[0] ?? "there"}</h1>
           <p className="text-muted-foreground mt-1">
             {me?.department ?? "Set your department in your profile"} {me?.year ? `• ${me.year}` : ""}
           </p>

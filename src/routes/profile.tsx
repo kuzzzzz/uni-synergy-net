@@ -160,7 +160,7 @@ function Profile() {
   return (
     <div className="space-y-8 max-w-5xl">
       <div>
-        <h1 className="font-display text-3xl font-bold">Your Profile</h1>
+        <h1 className="font-display text-2xl sm:text-3xl font-bold">Your Profile</h1>
         <p className="text-muted-foreground mt-1">Fill out details to power smart matches.</p>
       </div>
 

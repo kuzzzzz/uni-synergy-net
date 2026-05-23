@@ -55,7 +55,7 @@ function Connections() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-3xl font-bold flex items-center gap-2"><UserPlus className="size-6 text-primary" /> Connections</h1>
+        <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2"><UserPlus className="size-6 text-primary" /> Connections</h1>
         <p className="text-muted-foreground mt-1">Manage your collaboration network.</p>
       </div>
 
