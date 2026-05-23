@@ -38,13 +38,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<{ full_name: string; department: string | null; school_id: string | null; avatar_url: string | null } | null>(null);
+  const [profile, setProfile] = useState<{ full_name: string; department: string | null; avatar_url: string | null } | null>(null);
 
   useEffect(() => {
     if (!user) return;
     supabase
       .from("profiles")
-      .select("full_name, department, school_id, avatar_url")
+      .select("full_name, department, avatar_url")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => setProfile(data));
