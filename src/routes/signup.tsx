@@ -71,7 +71,7 @@ function Signup() {
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link to="/login" className="text-primary font-semibold hover:underline">Sign in</Link>
+          <Link to="/login" search={{ next }} className="text-primary font-semibold hover:underline">Sign in</Link>
         </p>
       </div>
     </div>
