@@ -106,7 +106,7 @@ function Consent() {
               Requested access
             </div>
             <ul className="text-sm space-y-1">
-              {scopes.map((s) => (
+              {scopes.map((s: string) => (
                 <li key={s} className="flex items-center gap-2">
                   <span className="size-1.5 rounded-full bg-primary" />
                   {s === "openid" || s === "profile"

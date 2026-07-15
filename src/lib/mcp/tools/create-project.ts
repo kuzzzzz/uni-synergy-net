@@ -26,7 +26,7 @@ export default defineTool({
         required_skills: required_skills ?? null,
         tags: tags ?? null,
         max_team_size: max_team_size ?? 5,
-        status: "recruiting",
+        status: "forming",
       })
       .select()
       .single();
