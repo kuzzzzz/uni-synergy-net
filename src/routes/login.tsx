@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function Login() {
-  const nav = useNavigate();
+  
   const { next } = Route.useSearch();
   const [mode, setMode] = useState<"email" | "school">("email");
   const [email, setEmail] = useState("");
