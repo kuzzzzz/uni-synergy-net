@@ -4,10 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { GraduationCap } from "lucide-react";
 
-export const Route = createFileRoute("/signup")({ component: Signup });
+function safeNext(next: unknown): string {
+  return typeof next === "string" && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+}
+
+export const Route = createFileRoute("/signup")({
+  validateSearch: (s: Record<string, unknown>) => ({ next: safeNext(s.next) }),
+  component: Signup,
+});
 
 function Signup() {
   const nav = useNavigate();
+  const { next } = Route.useSearch();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,14 +28,15 @@ function Signup() {
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin + "/dashboard",
+        emailRedirectTo: window.location.origin + next,
         data: { full_name: name },
       },
     });
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Account created — welcome!");
-    nav({ to: "/onboarding" });
+    if (next !== "/dashboard") window.location.href = next;
+    else nav({ to: "/onboarding" });
   };
 
   return (

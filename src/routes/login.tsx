@@ -5,10 +5,18 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { GraduationCap, Mail, Lock, IdCard } from "lucide-react";
 
-export const Route = createFileRoute("/login")({ component: Login });
+function safeNext(next: unknown): string {
+  return typeof next === "string" && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+}
+
+export const Route = createFileRoute("/login")({
+  validateSearch: (s: Record<string, unknown>) => ({ next: safeNext(s.next) }),
+  component: Login,
+});
 
 function Login() {
   const nav = useNavigate();
+  const { next } = Route.useSearch();
   const [mode, setMode] = useState<"email" | "school">("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,13 +29,13 @@ function Login() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) return toast.error(error.message);
-    nav({ to: "/dashboard" });
+    window.location.href = next;
   };
 
   const onGoogle = async () => {
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/dashboard" });
+    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + next });
     if (r.error) toast.error("Google sign-in failed");
-    else if (!r.redirected) nav({ to: "/dashboard" });
+    else if (!r.redirected) window.location.href = next;
   };
 
   const onSchool = async (e: React.FormEvent) => {
