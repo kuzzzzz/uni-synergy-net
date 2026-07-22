@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { RequireAuth } from "@/components/RequireAuth";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
-import { Plus, X, Save } from "lucide-react";
+import { Plus, X, Save, LogOut } from "lucide-react";
 
 export const Route = createFileRoute("/profile")({
   component: () => (
@@ -27,7 +27,8 @@ type Interest = { id: string; name: string };
 type Avail = { id?: string; day_of_week: number; start_time: string; end_time: string };
 
 function Profile() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -159,9 +160,20 @@ function Profile() {
 
   return (
     <div className="space-y-8 max-w-5xl">
-      <div>
-        <h1 className="font-display text-2xl sm:text-3xl font-bold">Your Profile</h1>
-        <p className="text-muted-foreground mt-1">Fill out details to power smart matches.</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold">Your Profile</h1>
+          <p className="text-muted-foreground mt-1">Fill out details to power smart matches.</p>
+        </div>
+        <button
+          onClick={async () => {
+            await signOut();
+            navigate({ to: "/login" });
+          }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-card hover:bg-secondary text-sm font-medium text-foreground transition-colors"
+        >
+          <LogOut className="size-4" /> Sign out
+        </button>
       </div>
 
       <section className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-4">
