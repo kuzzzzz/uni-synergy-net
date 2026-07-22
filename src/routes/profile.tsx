@@ -160,9 +160,20 @@ function Profile() {
 
   return (
     <div className="space-y-8 max-w-5xl">
-      <div>
-        <h1 className="font-display text-2xl sm:text-3xl font-bold">Your Profile</h1>
-        <p className="text-muted-foreground mt-1">Fill out details to power smart matches.</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold">Your Profile</h1>
+          <p className="text-muted-foreground mt-1">Fill out details to power smart matches.</p>
+        </div>
+        <button
+          onClick={async () => {
+            await signOut();
+            navigate({ to: "/login" });
+          }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-card hover:bg-secondary text-sm font-medium text-foreground transition-colors"
+        >
+          <LogOut className="size-4" /> Sign out
+        </button>
       </div>
 
       <section className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-4">
