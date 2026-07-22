@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { RequireAuth } from "@/components/RequireAuth";
 import { AppShell } from "@/components/AppShell";
 import { toast } from "sonner";
-import { Plus, X, Save } from "lucide-react";
+import { Plus, X, Save, LogOut } from "lucide-react";
 
 export const Route = createFileRoute("/profile")({
   component: () => (
