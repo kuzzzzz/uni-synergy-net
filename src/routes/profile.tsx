@@ -27,7 +27,8 @@ type Interest = { id: string; name: string };
 type Avail = { id?: string; day_of_week: number; start_time: string; end_time: string };
 
 function Profile() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
