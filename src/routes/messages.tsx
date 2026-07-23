@@ -25,6 +25,7 @@ function Messages() {
   const [active, setActive] = useState<Peer | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState("");
+  const [query, setQuery] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,6 +33,13 @@ function Messages() {
     supabase.from("profiles").select("id, full_name, department").neq("id", user.id).order("full_name")
       .then(({ data }) => setPeers(data ?? []));
   }, [user]);
+
+  const filteredPeers = peers.filter((p) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return (p.full_name ?? "").toLowerCase().includes(q) || (p.department ?? "").toLowerCase().includes(q);
+  });
+
 
   useEffect(() => {
     if (!user || !active) return;
