@@ -51,7 +51,7 @@ function SearchPage() {
       return;
     }
     setLoading(true);
-    const like = `%${query.replace(/[%_]/g, (m) => `\\${m}`)}%`;
+    const like = `%${query.replace(/[%_]/g, (m: string) => `\\${m}`)}%`;
     Promise.all([
       supabase.from("profiles").select("id, full_name, department, year")
         .or(`full_name.ilike.${like},department.ilike.${like}`).limit(20),
