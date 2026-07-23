@@ -75,8 +75,31 @@ function Messages() {
     const content = text.trim();
     setText("");
     const { data, error } = await supabase.from("messages").insert({ sender_id: user.id, recipient_id: active.id, content }).select().single();
-    if (!error && data) setMsgs((m) => (m.some((x) => x.id === data.id) ? m : [...m, data]));
+    if (error) {
+      console.error("send failed", error);
+      setText(content);
+      alert(`Could not send: ${error.message}`);
+      return;
+    }
+    if (data) setMsgs((m) => (m.some((x) => x.id === data.id) ? m : [...m, data]));
   }
+
+  return (
+    <div className="space-y-4">
+      <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2"><MessageSquare className="size-6 text-primary" /> Messages</h1>
+      <div className="bg-card border border-border rounded-2xl shadow-soft grid grid-cols-1 md:grid-cols-12 h-[70vh] overflow-hidden">
+        <aside className={`md:col-span-4 border-b md:border-b-0 md:border-r border-border flex flex-col min-h-0 ${active ? "hidden md:flex" : "flex"}`}>
+          <div className="p-3 border-b border-border">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search peers by name or department…"
+              className="w-full h-9 px-3 bg-secondary border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-ring/30"
+            />
+          </div>
+          <div className="flex-1 overflow-y-auto">
+          {filteredPeers.map((p) => (
+
 
   return (
     <div className="space-y-4">
