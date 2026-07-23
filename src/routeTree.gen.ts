@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StudyGroupsRouteImport } from './routes/study-groups'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SearchRouteImport } from './routes/search'
 import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -37,6 +38,11 @@ const StudyGroupsRoute = StudyGroupsRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResourcesRoute = ResourcesRouteImport.update({
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/projects': typeof ProjectsRoute
   '/resources': typeof ResourcesRoute
+  '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/study-groups': typeof StudyGroupsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -162,6 +169,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/projects': typeof ProjectsRoute
   '/resources': typeof ResourcesRoute
+  '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/study-groups': typeof StudyGroupsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -184,6 +192,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/projects': typeof ProjectsRoute
   '/resources': typeof ResourcesRoute
+  '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/study-groups': typeof StudyGroupsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -207,6 +216,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/projects'
     | '/resources'
+    | '/search'
     | '/signup'
     | '/study-groups'
     | '/.mcp/list-tools'
@@ -228,6 +238,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/projects'
     | '/resources'
+    | '/search'
     | '/signup'
     | '/study-groups'
     | '/.mcp/list-tools'
@@ -249,6 +260,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/projects'
     | '/resources'
+    | '/search'
     | '/signup'
     | '/study-groups'
     | '/.mcp/list-tools'
@@ -271,6 +283,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   ProjectsRoute: typeof ProjectsRoute
   ResourcesRoute: typeof ResourcesRoute
+  SearchRoute: typeof SearchRoute
   SignupRoute: typeof SignupRoute
   StudyGroupsRoute: typeof StudyGroupsRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
@@ -294,6 +307,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/resources': {
@@ -431,6 +451,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   ProjectsRoute: ProjectsRoute,
   ResourcesRoute: ResourcesRoute,
+  SearchRoute: SearchRoute,
   SignupRoute: SignupRoute,
   StudyGroupsRoute: StudyGroupsRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,

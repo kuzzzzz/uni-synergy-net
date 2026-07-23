@@ -152,13 +152,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             <Menu className="size-5" />
           </button>
-          <div className="relative flex-1 max-w-md hidden sm:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <input
-              placeholder="Search courses, skills, or peers..."
-              className="w-full h-9 bg-secondary rounded-full border border-border pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-ring/30"
-            />
-          </div>
+          <SearchBox />
+
           <Link to="/dashboard" className="lg:hidden flex items-center gap-2 sm:hidden">
             <div className="size-7 bg-gradient-brand rounded-lg flex items-center justify-center">
               <GraduationCap className="size-4 text-white" />
@@ -182,3 +177,28 @@ export function AppShell({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
+function SearchBox() {
+  const navigate = useNavigate();
+  const [q, setQ] = useState("");
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const v = q.trim();
+        if (!v) return;
+        navigate({ to: "/search", search: { q: v } });
+      }}
+      className="relative flex-1 max-w-md hidden sm:block"
+    >
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+      <input
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Search courses, skills, or peers..."
+        className="w-full h-9 bg-secondary rounded-full border border-border pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-ring/30"
+      />
+    </form>
+  );
+}
+
