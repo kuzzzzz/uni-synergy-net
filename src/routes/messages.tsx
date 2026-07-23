@@ -25,6 +25,7 @@ function Messages() {
   const [active, setActive] = useState<Peer | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState("");
+  const [query, setQuery] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,6 +33,13 @@ function Messages() {
     supabase.from("profiles").select("id, full_name, department").neq("id", user.id).order("full_name")
       .then(({ data }) => setPeers(data ?? []));
   }, [user]);
+
+  const filteredPeers = peers.filter((p) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return (p.full_name ?? "").toLowerCase().includes(q) || (p.department ?? "").toLowerCase().includes(q);
+  });
+
 
   useEffect(() => {
     if (!user || !active) return;
@@ -67,15 +75,30 @@ function Messages() {
     const content = text.trim();
     setText("");
     const { data, error } = await supabase.from("messages").insert({ sender_id: user.id, recipient_id: active.id, content }).select().single();
-    if (!error && data) setMsgs((m) => (m.some((x) => x.id === data.id) ? m : [...m, data]));
+    if (error) {
+      console.error("send failed", error);
+      setText(content);
+      alert(`Could not send: ${error.message}`);
+      return;
+    }
+    if (data) setMsgs((m) => (m.some((x) => x.id === data.id) ? m : [...m, data]));
   }
 
   return (
     <div className="space-y-4">
       <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2"><MessageSquare className="size-6 text-primary" /> Messages</h1>
       <div className="bg-card border border-border rounded-2xl shadow-soft grid grid-cols-1 md:grid-cols-12 h-[70vh] overflow-hidden">
-        <aside className={`md:col-span-4 border-b md:border-b-0 md:border-r border-border overflow-y-auto ${active ? "hidden md:block" : "block"}`}>
-          {peers.map((p) => (
+        <aside className={`md:col-span-4 border-b md:border-b-0 md:border-r border-border flex flex-col min-h-0 ${active ? "hidden md:flex" : "flex"}`}>
+          <div className="p-3 border-b border-border">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search peers by name or department…"
+              className="w-full h-9 px-3 bg-secondary border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-ring/30"
+            />
+          </div>
+          <div className="flex-1 overflow-y-auto">
+          {filteredPeers.map((p) => (
             <button
               key={p.id}
               onClick={() => setActive(p)}
@@ -90,11 +113,15 @@ function Messages() {
               </div>
             </button>
           ))}
-          {peers.length === 0 && (
-            <div className="p-6 text-center text-sm text-muted-foreground">No peers yet. Invite classmates to join.</div>
+          {filteredPeers.length === 0 && (
+            <div className="p-6 text-center text-sm text-muted-foreground">
+              {peers.length === 0 ? "No peers yet. Invite classmates to join." : "No peers match your search."}
+            </div>
           )}
+          </div>
         </aside>
         <section className={`md:col-span-8 flex-col ${active ? "flex" : "hidden md:flex"}`}>
+
           {!active ? (
             <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm p-6 text-center">Select a peer to start a chat</div>
           ) : (
