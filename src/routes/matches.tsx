@@ -28,7 +28,123 @@ type MatchRow = {
   iTeach: string[];
   shared: string[];
   availOverlap: number;
+  components: {
+    complementary: number;
+    jaccard: number;
+    cosine: number;
+    availability: number;
+    department: number;
+  };
 };
+
+type SkillRow = {
+  user_id: string;
+  skill_id: string;
+  level: "weak" | "medium" | "strong" | "expert";
+  skills?: { name?: string } | null;
+};
+
+type InterestRow = {
+  user_id: string;
+  interest_id: string;
+  interests?: { name?: string } | null;
+};
+
+const LEVEL_VALUE: Record<SkillRow["level"], number> = {
+  weak: 1,
+  medium: 2,
+  strong: 3,
+  expert: 4,
+};
+
+/** Jaccard similarity between two sets: |A ∩ B| / |A ∪ B|. */
+function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 && b.size === 0) return 0;
+  let intersection = 0;
+  for (const value of a) if (b.has(value)) intersection++;
+  const union = a.size + b.size - intersection;
+  return union === 0 ? 0 : intersection / union;
+}
+
+/** Cosine similarity between skill-proficiency vectors aligned by skill ID. */
+function cosineSkillSimilarity(a: SkillRow[], b: SkillRow[]): number {
+  const aMap = new Map(a.map((s) => [s.skill_id, LEVEL_VALUE[s.level]]));
+  const bMap = new Map(b.map((s) => [s.skill_id, LEVEL_VALUE[s.level]]));
+  const ids = new Set([...aMap.keys(), ...bMap.keys()]);
+  if (ids.size === 0) return 0;
+
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (const id of ids) {
+    const av = aMap.get(id) ?? 0;
+    const bv = bMap.get(id) ?? 0;
+    dot += av * bv;
+    normA += av * av;
+    normB += bv * bv;
+  }
+  if (normA === 0 || normB === 0) return 0;
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+/**
+ * Complementary-skill coverage. The candidate's strong/expert skills are
+ * matched against the current user's weak skills and vice versa. The first
+ * direction is weighted 60% and the reverse direction 40%.
+ */
+function complementarySkillScore(
+  mySkills: SkillRow[],
+  theirSkills: SkillRow[],
+): { score: number; theyTeach: string[]; iTeach: string[] } {
+  const myWeak = new Map(
+    mySkills.filter((s) => s.level === "weak").map((s) => [s.skill_id, s.skills?.name ?? s.skill_id]),
+  );
+  const myStrong = new Map(
+    mySkills
+      .filter((s) => s.level === "strong" || s.level === "expert")
+      .map((s) => [s.skill_id, s.skills?.name ?? s.skill_id]),
+  );
+
+  const theyTeach = theirSkills
+    .filter((s) => (s.level === "strong" || s.level === "expert") && myWeak.has(s.skill_id))
+    .map((s) => s.skills?.name ?? s.skill_id);
+
+  const iTeach = theirSkills
+    .filter((s) => s.level === "weak" && myStrong.has(s.skill_id))
+    .map((s) => myStrong.get(s.skill_id) ?? s.skill_id);
+
+  const teachCoverage = myWeak.size > 0 ? theyTeach.length / myWeak.size : 0;
+  const learnCoverage = myStrong.size > 0 ? iTeach.length / myStrong.size : 0;
+  const score = Math.min(1, teachCoverage * 0.6 + learnCoverage * 0.4);
+
+  return { score, theyTeach, iTeach };
+}
+
+export function calculateHybridMatchScore({
+  complementary,
+  jaccard,
+  cosine,
+  availability,
+  department,
+}: {
+  complementary: number;
+  jaccard: number;
+  cosine: number;
+  availability: number;
+  department: number;
+}): number {
+  // Hybrid recommendation weights: complementary skills 40%,
+  // interest overlap 20%, skill-profile cosine similarity 20%,
+  // availability 10%, department compatibility 10%.
+  return Math.round(
+    (0.4 * complementary +
+      0.2 * jaccard +
+      0.2 * cosine +
+      0.1 * availability +
+      0.1 * department) *
+      100,
+  );
+}
 
 function Matches() {
   const { user } = useAuth();
@@ -52,28 +168,59 @@ function Matches() {
 
       setSent(new Set((cr ?? []).map((r) => r.to_user)));
 
-      const my = (skills ?? []).filter((s) => s.user_id === user.id);
-      const myWeak = new Map(my.filter((s) => s.level === "weak").map((s) => [s.skill_id, (s as any).skills?.name]));
-      const myStrong = new Map(my.filter((s) => s.level === "strong" || s.level === "expert").map((s) => [s.skill_id, (s as any).skills?.name]));
-      const myInts = new Set((ints ?? []).filter((i) => i.user_id === user.id).map((i) => i.interest_id));
+      const allSkills = (skills ?? []) as SkillRow[];
+      const allInterests = (ints ?? []) as InterestRow[];
+      const mySkills = allSkills.filter((s) => s.user_id === user.id);
+      const myInts = new Set(allInterests.filter((i) => i.user_id === user.id).map((i) => i.interest_id));
       const myAv = (av ?? []).filter((a) => a.user_id === user.id);
 
       const scored = (others ?? []).map<MatchRow>((o) => {
-        const theirs = (skills ?? []).filter((s) => s.user_id === o.id);
-        const theyTeach = theirs.filter((s) => (s.level === "strong" || s.level === "expert") && myWeak.has(s.skill_id))
-          .map((s) => (s as any).skills?.name).filter(Boolean);
-        const iTeach = theirs.filter((s) => s.level === "weak" && myStrong.has(s.skill_id))
-          .map((s) => myStrong.get(s.skill_id)).filter(Boolean);
-        const theirInts = (ints ?? []).filter((i) => i.user_id === o.id);
-        const shared = theirInts.filter((i) => myInts.has(i.interest_id)).map((i) => (i as any).interests?.name).filter(Boolean);
+        const theirSkills = allSkills.filter((s) => s.user_id === o.id);
+        const complementary = complementarySkillScore(mySkills, theirSkills);
+
+        const theirInts = allInterests.filter((i) => i.user_id === o.id);
+        const theirIntSet = new Set(theirInts.map((i) => i.interest_id));
+        const jaccard = jaccardSimilarity(myInts, theirIntSet);
+        const shared = theirInts
+          .filter((i) => myInts.has(i.interest_id))
+          .map((i) => i.interests?.name ?? i.interest_id);
+
+        const cosine = cosineSkillSimilarity(mySkills, theirSkills);
+
         const theirAv = (av ?? []).filter((a) => a.user_id === o.id);
         let overlap = 0;
-        for (const a of myAv) for (const b of theirAv) {
-          if (a.day_of_week === b.day_of_week && a.start_time < b.end_time && b.start_time < a.end_time) overlap++;
+        for (const a of myAv) {
+          for (const b of theirAv) {
+            if (a.day_of_week === b.day_of_week && a.start_time < b.end_time && b.start_time < a.end_time) overlap++;
+          }
         }
-        const deptBoost = o.department && me?.department && o.department === me.department ? 15 : 0;
-        const score = Math.min(99, 30 + theyTeach.length * 12 + iTeach.length * 8 + shared.length * 5 + overlap * 4 + deptBoost);
-        return { ...o, score, theyTeach, iTeach, shared, availOverlap: overlap };
+        const maxAvailability = Math.max(myAv.length, theirAv.length);
+        const availability = maxAvailability > 0 ? Math.min(1, overlap / maxAvailability) : 0;
+
+        const department = o.department && me?.department && o.department === me.department ? 1 : 0;
+        const score = calculateHybridMatchScore({
+          complementary: complementary.score,
+          jaccard,
+          cosine,
+          availability,
+          department,
+        });
+
+        return {
+          ...o,
+          score,
+          theyTeach: complementary.theyTeach,
+          iTeach: complementary.iTeach,
+          shared,
+          availOverlap: overlap,
+          components: {
+            complementary: complementary.score,
+            jaccard,
+            cosine,
+            availability,
+            department,
+          },
+        };
       });
       scored.sort((a, b) => b.score - a.score);
       setRows(scored);
@@ -95,7 +242,7 @@ function Matches() {
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold flex items-center gap-2"><Sparkles className="size-6 text-primary" /> Smart Matches</h1>
-          <p className="text-muted-foreground mt-1">Ranked by complementary skills, shared interests, and schedule overlap.</p>
+          <p className="text-muted-foreground mt-1">Ranked using complementary skills, Jaccard interest similarity, cosine skill similarity, availability, and department compatibility.</p>
         </div>
         <input
           value={filter}
@@ -131,6 +278,9 @@ function Matches() {
               {m.iTeach.length > 0 && <Row label="You can help with" items={m.iTeach} color="text-accent" />}
               {m.shared.length > 0 && <Row label="Shared interests" items={m.shared} color="text-success" />}
               {m.availOverlap > 0 && <div className="text-muted-foreground">⏱ {m.availOverlap} overlapping availability slot{m.availOverlap > 1 ? "s" : ""}</div>}
+            </div>
+            <div className="mt-3 text-[10px] text-muted-foreground">
+              Hybrid score: 40% complementary · 20% interests · 20% skills · 10% availability · 10% department
             </div>
             <div className="mt-4 flex gap-2">
               <button
