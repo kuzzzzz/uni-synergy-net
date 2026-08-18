@@ -35,8 +35,10 @@ function Signup() {
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Account created — welcome!");
+    // There is no /onboarding route in this project. Route new accounts to
+    // the existing dashboard instead of sending them to a guaranteed 404.
     if (next !== "/dashboard") window.location.href = next;
-    else nav({ to: "/onboarding" });
+    else nav({ to: "/dashboard" });
   };
 
   return (
@@ -50,28 +52,14 @@ function Signup() {
         </Link>
         <h1 className="font-display text-2xl font-bold mb-1">Create your account</h1>
         <p className="text-sm text-muted-foreground mb-6">Start matching with classmates.</p>
-
         <form onSubmit={submit} className="space-y-3">
-          <input
-            type="text" placeholder="Full name" required value={name} onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm outline-none focus:ring-2 focus:ring-ring/30"
-          />
-          <input
-            type="email" placeholder="University email" required value={email} onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm outline-none focus:ring-2 focus:ring-ring/30"
-          />
-          <input
-            type="password" placeholder="Password (min 8 chars)" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm outline-none focus:ring-2 focus:ring-ring/30"
-          />
-          <button disabled={loading} className="w-full py-2.5 rounded-lg bg-gradient-brand text-white font-semibold text-sm shadow-glow disabled:opacity-60">
-            {loading ? "Creating…" : "Create account"}
-          </button>
+          <input type="text" placeholder="Full name" required value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm outline-none focus:ring-2 focus:ring-ring/30" />
+          <input type="email" placeholder="University email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm outline-none focus:ring-2 focus:ring-ring/30" />
+          <input type="password" placeholder="Password (min 8 chars)" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm outline-none focus:ring-2 focus:ring-ring/30" />
+          <button disabled={loading} className="w-full py-2.5 rounded-lg bg-gradient-brand text-white font-semibold text-sm shadow-glow disabled:opacity-60">{loading ? "Creating…" : "Create account"}</button>
         </form>
-
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <Link to="/login" search={{ next }} className="text-primary font-semibold hover:underline">Sign in</Link>
+          Already have an account? <Link to="/login" search={{ next }} className="text-primary font-semibold hover:underline">Sign in</Link>
         </p>
       </div>
     </div>
