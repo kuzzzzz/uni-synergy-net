@@ -59,7 +59,7 @@ const LEVEL_VALUE: Record<SkillRow["level"], number> = {
 
 /** Jaccard similarity between two sets: |A ∩ B| / |A ∪ B|. */
 function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
-  if (a.size === 0 && b.size === 0) return 0;
+  if (a.size === 0 || b.size === 0) return 0;
   let intersection = 0;
   for (const value of a) if (b.has(value)) intersection++;
   const union = a.size + b.size - intersection;
@@ -88,9 +88,10 @@ function cosineSkillSimilarity(a: SkillRow[], b: SkillRow[]): number {
 }
 
 /**
- * Complementary-skill coverage. The candidate's strong/expert skills are
- * matched against the current user's weak skills and vice versa. The first
- * direction is weighted 60% and the reverse direction 40%.
+ * Measures how much the two users can mutually fill each other's skill gaps.
+ * Strong/expert skills can teach weak skills. The two directions are weighted
+ * 60% toward what the candidate can teach the current user and 40% toward the
+ * reverse direction.
  */
 function complementarySkillScore(
   mySkills: SkillRow[],
@@ -105,21 +106,28 @@ function complementarySkillScore(
       .map((s) => [s.skill_id, s.skills?.name ?? s.skill_id]),
   );
 
-  const theyTeach = theirSkills
-    .filter((s) => (s.level === "strong" || s.level === "expert") && myWeak.has(s.skill_id))
+  const theirStrong = theirSkills.filter((s) => s.level === "strong" || s.level === "expert");
+  const theirWeak = theirSkills.filter((s) => s.level === "weak");
+
+  const theyTeach = theirStrong
+    .filter((s) => myWeak.has(s.skill_id))
     .map((s) => s.skills?.name ?? s.skill_id);
 
-  const iTeach = theirSkills
-    .filter((s) => s.level === "weak" && myStrong.has(s.skill_id))
+  const iTeach = theirWeak
+    .filter((s) => myStrong.has(s.skill_id))
     .map((s) => myStrong.get(s.skill_id) ?? s.skill_id);
 
-  const teachCoverage = myWeak.size > 0 ? theyTeach.length / myWeak.size : 0;
-  const learnCoverage = myStrong.size > 0 ? iTeach.length / myStrong.size : 0;
+  const teachCoverage = myWeak.size > 0 ? Math.min(1, theyTeach.length / myWeak.size) : 0;
+  const learnCoverage = theirWeak.length > 0 ? Math.min(1, iTeach.length / theirWeak.length) : 0;
   const score = Math.min(1, teachCoverage * 0.6 + learnCoverage * 0.4);
 
   return { score, theyTeach, iTeach };
 }
 
+/**
+ * Hybrid recommendation score. Complementarity is deliberately dominant:
+ * collaboration usefulness is more important than simple profile similarity.
+ */
 export function calculateHybridMatchScore({
   complementary,
   jaccard,
@@ -133,17 +141,14 @@ export function calculateHybridMatchScore({
   availability: number;
   department: number;
 }): number {
-  // Hybrid recommendation weights: complementary skills 40%,
-  // interest overlap 20%, skill-profile cosine similarity 20%,
-  // availability 10%, department compatibility 10%.
-  return Math.round(
-    (0.4 * complementary +
-      0.2 * jaccard +
-      0.2 * cosine +
-      0.1 * availability +
-      0.1 * department) *
-      100,
-  );
+  const normalized =
+    0.45 * complementary +
+    0.20 * jaccard +
+    0.15 * cosine +
+    0.10 * availability +
+    0.10 * department;
+
+  return Math.round(Math.max(0, Math.min(1, normalized)) * 100);
 }
 
 function Matches() {
@@ -279,8 +284,15 @@ function Matches() {
               {m.shared.length > 0 && <Row label="Shared interests" items={m.shared} color="text-success" />}
               {m.availOverlap > 0 && <div className="text-muted-foreground">⏱ {m.availOverlap} overlapping availability slot{m.availOverlap > 1 ? "s" : ""}</div>}
             </div>
-            <div className="mt-3 text-[10px] text-muted-foreground">
-              Hybrid score: 40% complementary · 20% interests · 20% skills · 10% availability · 10% department
+            <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] text-muted-foreground">
+              <span>Complementary: {Math.round(m.components.complementary * 100)}%</span>
+              <span>Interests: {Math.round(m.components.jaccard * 100)}%</span>
+              <span>Skills: {Math.round(m.components.cosine * 100)}%</span>
+              <span>Availability: {Math.round(m.components.availability * 100)}%</span>
+              <span>Department: {m.components.department ? "Match" : "Different"}</span>
+            </div>
+            <div className="mt-2 text-[10px] text-muted-foreground">
+              Weighted hybrid score: 45% complementary · 20% interests · 15% skills · 10% availability · 10% department
             </div>
             <div className="mt-4 flex gap-2">
               <button
